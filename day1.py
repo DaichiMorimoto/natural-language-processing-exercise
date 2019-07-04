@@ -2,6 +2,7 @@ import re
 import numpy as np
 import pandas as pd
 import nltk
+import matplotlib.pyplot as plt
 from nltk.corpus import wordnet as wn
 
 # 前処理
@@ -111,12 +112,12 @@ def calc_sim(vec, is_cos):
     if is_cos:
         sims = np.zeros((vec.shape[0], vec.shape[0]))
         for i in range(vec.shape[0]):
-            for j in range(i+1, vec.shape[0]):
+            for j in range(vec.shape[0]):
                 sims[i][j] = cosine_similarity(vec[i], vec[j])
     else:
         sims = np.full((vec.shape[0], vec.shape[0]), np.inf)
         for i in range(vec.shape[0]):
-            for j in range(i+1, vec.shape[0]):
+            for j in range(vec.shape[0]):
                 sims[i][j] = minkowski_distance(vec[i], vec[j], 2)
 
     return sims
@@ -127,6 +128,27 @@ def print_max_pair(names, vecs, is_cos):
     else:
         idx = np.unravel_index(np.argmin(vecs), vecs.shape)
     print(names[idx[0]] + ' and ' + names[idx[1]])
+
+# 正方行列と X および Y のラベルの行列を渡す
+def draw_heatmap(data, row_labels, column_labels, name, is_cos):
+    # 描画する
+    fig, ax = plt.subplots()
+    if is_cos:
+        heatmap = ax.pcolor(data, cmap=plt.cm.YlOrRd)
+    else:
+        heatmap = ax.pcolor(data, cmap=plt.cm.YlOrRd_r)
+
+    ax.set_xticks(np.arange(data.shape[0]) + 0.5, minor=False)
+    ax.set_yticks(np.arange(data.shape[1]) + 0.5, minor=False)
+
+    ax.invert_yaxis()
+    ax.xaxis.tick_top()
+
+    ax.set_xticklabels(row_labels, minor=False)
+    ax.set_yticklabels(column_labels, minor=False)
+    plt.savefig('result/'+ name +'.png')
+
+    return heatmap
 
 def main():
     # CSV読み込み兼前処理
@@ -151,10 +173,18 @@ def main():
     cos_bow = calc_sim(bow_vec, True)
     min_bow = calc_sim(bow_vec, False)
 
+    names = df["Name"].values
+    draw_heatmap(cos_tfidf, names, names, 'cos_tfidf', True)
+    draw_heatmap(min_tfidf, names, names, 'min_tfidf', False)
+    draw_heatmap(cos_bow, names, names, 'cos_bow', True)
+    draw_heatmap(min_bow, names, names, 'min_bow', False)
+
+'''
     print_max_pair(df["Name"].values, cos_tfidf, True)
     print_max_pair(df["Name"].values, min_tfidf, False)
     print_max_pair(df["Name"].values, cos_bow, True)
     print_max_pair(df["Name"].values, min_bow, False)
+'''
 
 if __name__ == "__main__":
     main()
