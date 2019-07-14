@@ -1,6 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 import numpy as np
+import re
 import matplotlib.pyplot as plt
 import pandas as pd
 import nltk
@@ -12,7 +13,6 @@ from nltk.corpus import wordnet as wn
 # STOP WORDS
 en_stop = nltk.corpus.stopwords.words('english')
 en_stop= ["``","/",",.",".,",";","--",":",")","(",'"','&',"'",'),',',"','-','.,','.,"','.-',"?",">","<"]                  \
-         +["0","1","2","3","4","5","6","7","8","9","10","11","12","86","1986","1987","000"]                                                      \
          +["said","say","u","v","mln","ct","net","dlrs","tonne","pct","shr","nil","company","lt","share","year","billion","price"]          \
          +en_stop
 
@@ -29,9 +29,12 @@ def preprocess_word(word, stopwordset):
     if word in stopwordset:
         return None
 
+    pattern = '[0-9]*'
+    word = re.sub(pattern, '', word)
+
     #4.lemmatize  ex: cooked=>cook
     lemma = wn.morphy(word)
-    if lemma is None:
+    if lemma is None or lemma is '':
         return word
 
     elif lemma in stopwordset: #lemmatizeしたものがstopwordである可能性がある
@@ -41,6 +44,11 @@ def preprocess_word(word, stopwordset):
 
 def preprocess_document(document):
     document=[preprocess_word(w, en_stop) for w in document]
+    def cleaning_text(text):
+        pattern1 = '@|%'
+        text = re.sub(pattern1, '', text)
+        return text
+
     document=[w for w in document if w is not None]
     return ' '.join(document)
 
@@ -70,8 +78,8 @@ def main():
     tf_idf = vectorizer.fit_transform(pp_docs)
 
     # K-means
-    num_clusters = 5
-    km = KMeans(n_clusters=num_clusters, random_state=0, precompute_distances=True)
+    num_clusters = 8
+    km = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=300, random_state=0, precompute_distances=True)
 
     clusters = km.fit_predict(tf_idf)
     categories=[','.join(corpus.categories(fileid)) for fileid in corpus.fileids()[:k]]
@@ -83,8 +91,8 @@ def main():
     k_df = pd.DataFrame({ 'key': keys })
     print(k_df)
     print(w_df)
-    w_df.to_csv('result/kmeans.csv')
-    k_df.to_csv('result/tf_idf_key.csv')
+    w_df.to_csv('result/kmeans_' + str(num_clusters) + '.csv')
+    k_df.to_csv('result/tf_idf_key_' + str(num_clusters) + '.csv')
 
 if __name__ == "__main__":
     main()
