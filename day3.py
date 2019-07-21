@@ -70,10 +70,10 @@ def main():
     categories=[corpus.categories(fileid) for fileid in corpus.fileids()]
 
     alpha = 1
-    eta = 2
-    num_topics = 10
+    eta = 1
+    num_topics = 5
     ldamodel = gensim.models.ldamodel.LdaModel(corpus=corpus_, num_topics=num_topics, id2word=dictionary,
-                                                alpha=0.1, eta=0.2, #minimum_probability=0.0
+                                                alpha=0.1, eta=0.1, #minimum_probability=0.0
                                                 )
 
     #(トピックID, 当該トピックにおける単語とそのprobability)  ※　のうち、上位num_words位
